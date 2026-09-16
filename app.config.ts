@@ -87,6 +87,14 @@ const config: ExpoConfig = {
   plugins: [
     "expo-router",
     [
+      "expo-camera",
+      {
+        cameraPermission: "Permite que sportCamacho use la cámara para reconocer tus flexiones.",
+        microphonePermission: "Permite que sportCamacho use el micrófono al grabar una sesión.",
+        recordAudioAndroid: false,
+      },
+    ],
+    [
       "expo-audio",
       {
         microphonePermission: "Allow $(PRODUCT_NAME) to access your microphone.",
