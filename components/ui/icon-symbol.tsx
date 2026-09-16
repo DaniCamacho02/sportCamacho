@@ -18,6 +18,7 @@ const MAPPING = {
   "camera.fill": "videocam",
   "lock.fill": "lock",
   "chart.bar.fill": "bar-chart",
+  "shield.fill": "shield",
   "paperplane.fill": "send",
   "chevron.left.forwardslash.chevron.right": "code",
   "chevron.right": "chevron-right",

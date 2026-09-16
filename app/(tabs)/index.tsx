@@ -3,6 +3,7 @@ import { useRouter } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { ScreenContainer } from "@/components/screen-container";
+import { getAvatarDef } from "@/components/avatars/hero-avatars";
 import { useSportCamacho } from "@/lib/sport-context";
 
 function AppDot({ color }: { color: string }) {
@@ -11,7 +12,9 @@ function AppDot({ color }: { color: string }) {
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { bankMinutes, apps, entries } = useSportCamacho();
+  const { bankMinutes, apps, entries, avatarId, levelInfo } = useSportCamacho();
+  const avatar = getAvatarDef(avatarId);
+  const AvatarIcon = avatar.Component;
   const blockedApps = apps.filter((app) => app.blocked);
   const earnedToday = entries.filter((entry) => entry.type === "earned" && new Date(entry.date).toDateString() === new Date().toDateString()).reduce((sum, entry) => sum + entry.minutes, 0);
 
@@ -23,7 +26,10 @@ export default function HomeScreen() {
             <Text style={styles.eyebrow}>MI DISCIPLINA DIGITAL</Text>
             <Text style={styles.title}>Hola, Camacho</Text>
           </View>
-          <View style={styles.avatar}><Text style={styles.avatarText}>SC</Text></View>
+          <Pressable onPress={() => router.push("/(tabs)/hero" as never)} style={styles.avatarWrap}>
+            <View style={[styles.avatar, { backgroundColor: `${avatar.accent}22` }]}><AvatarIcon size={40} /></View>
+            <View style={styles.levelBadge}><Text style={styles.levelBadgeText}>{levelInfo.level}</Text></View>
+          </Pressable>
         </View>
 
         <View style={styles.bankCard}>
@@ -88,8 +94,10 @@ const styles = StyleSheet.create({
   headerRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   eyebrow: { color: "#9AA5BA", fontSize: 11, fontWeight: "800", letterSpacing: 1.4 },
   title: { color: "#F5F7FB", fontSize: 28, fontWeight: "800", marginTop: 5 },
-  avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: "#D9FF66", alignItems: "center", justifyContent: "center" },
-  avatarText: { color: "#101B2D", fontSize: 13, fontWeight: "900" },
+  avatarWrap: { position: "relative" },
+  avatar: { width: 52, height: 52, borderRadius: 26, alignItems: "center", justifyContent: "center", overflow: "hidden" },
+  levelBadge: { position: "absolute", bottom: -3, right: -3, minWidth: 20, height: 20, borderRadius: 10, backgroundColor: "#D9FF66", alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: "#101623", paddingHorizontal: 3 },
+  levelBadgeText: { color: "#101B2D", fontSize: 10, fontWeight: "900" },
   bankCard: { backgroundColor: "#D9FF66", borderRadius: 24, padding: 20, shadowColor: "#D9FF66", shadowOpacity: 0.12, shadowRadius: 18, shadowOffset: { width: 0, height: 8 } },
   bankTopRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
   bankLabel: { color: "#51611E", fontSize: 11, fontWeight: "900", letterSpacing: 1.3 },

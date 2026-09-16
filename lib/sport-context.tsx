@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { PropsWithChildren, createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { calculatePeriodStats, type StatsPeriod } from "@/lib/sport-logic";
+import { calculatePeriodStats, getLevelInfo, getStreakDays, getTotalReps, type LevelInfo, type StatsPeriod } from "@/lib/sport-logic";
+import type { AvatarId } from "@/components/avatars/hero-avatars";
 
 export type RewardMinutes = 1 | 2;
 export type LedgerType = "earned" | "spent";
@@ -29,14 +30,19 @@ type SportState = {
   rewardMinutes: RewardMinutes;
   apps: BlockedApp[];
   entries: LedgerEntry[];
+  avatarId: AvatarId;
 };
 
 type SportContextValue = SportState & {
   hydrated: boolean;
   selectedAppId: AppId;
+  totalReps: number;
+  levelInfo: LevelInfo;
+  streakDays: number;
   setRewardMinutes: (minutes: RewardMinutes) => void;
   toggleApp: (id: AppId) => void;
   selectApp: (id: AppId) => void;
+  setAvatarId: (id: AvatarId) => void;
   addPushup: () => void;
   spendMinutes: (appId: AppId, minutes: number) => boolean;
   getPeriodStats: (period: StatsPeriod) => { earned: number; spent: number; reps: number };
@@ -56,6 +62,7 @@ const defaultState: SportState = {
   rewardMinutes: 1,
   apps: defaultApps,
   entries: [],
+  avatarId: "warrior",
 };
 
 const SportContext = createContext<SportContextValue | null>(null);
@@ -68,7 +75,7 @@ export function SportProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     AsyncStorage.getItem(STORAGE_KEY)
       .then((saved) => {
-        if (saved) setState(JSON.parse(saved) as SportState);
+        if (saved) setState((current) => ({ ...current, ...(JSON.parse(saved) as Partial<SportState>) }));
       })
       .catch(() => undefined)
       .finally(() => setHydrated(true));
@@ -90,6 +97,10 @@ export function SportProvider({ children }: PropsWithChildren) {
   }, []);
 
   const selectApp = useCallback((id: AppId) => setSelectedAppId(id), []);
+
+  const setAvatarId = useCallback((id: AvatarId) => {
+    setState((current) => ({ ...current, avatarId: id }));
+  }, []);
 
   const addPushup = useCallback(() => {
     setState((current) => ({
@@ -120,9 +131,27 @@ export function SportProvider({ children }: PropsWithChildren) {
     [state.entries],
   );
 
+  const totalReps = useMemo(() => getTotalReps(state.entries), [state.entries]);
+  const levelInfo = useMemo(() => getLevelInfo(totalReps), [totalReps]);
+  const streakDays = useMemo(() => getStreakDays(state.entries), [state.entries]);
+
   const value = useMemo(
-    () => ({ ...state, hydrated, selectedAppId, setRewardMinutes, toggleApp, selectApp, addPushup, spendMinutes, getPeriodStats }),
-    [state, hydrated, selectedAppId, setRewardMinutes, toggleApp, selectApp, addPushup, spendMinutes, getPeriodStats],
+    () => ({
+      ...state,
+      hydrated,
+      selectedAppId,
+      totalReps,
+      levelInfo,
+      streakDays,
+      setRewardMinutes,
+      toggleApp,
+      selectApp,
+      setAvatarId,
+      addPushup,
+      spendMinutes,
+      getPeriodStats,
+    }),
+    [state, hydrated, selectedAppId, totalReps, levelInfo, streakDays, setRewardMinutes, toggleApp, selectApp, setAvatarId, addPushup, spendMinutes, getPeriodStats],
   );
 
   return <SportContext.Provider value={value}>{children}</SportContext.Provider>;
