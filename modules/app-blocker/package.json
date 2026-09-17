@@ -1,0 +1,7 @@
+{
+  "name": "app-blocker",
+  "version": "1.0.0",
+  "description": "Módulo nativo local: AccessibilityService que detecta apps vetadas en primer plano y redirige a sportCamacho.",
+  "main": "index.ts",
+  "types": "index.ts"
+}

@@ -1,11 +1,14 @@
 import { MaterialIcons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { ScreenContainer } from "@/components/screen-container";
+import { AppIcon } from "@/components/app-icon";
 import { useSportCamacho } from "@/lib/sport-context";
+import { usePushupDetector } from "@/hooks/use-pushup-detector";
+import { preloadPoseModel } from "@/lib/pose/pose-model";
 
 export default function TrainScreen() {
   const router = useRouter();
@@ -13,13 +16,23 @@ export default function TrainScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [lastEarned, setLastEarned] = useState<number | null>(null);
   const [investment, setInvestment] = useState(1);
+  const [detecting, setDetecting] = useState(false);
   const selectedApp = apps.find((app) => app.id === selectedAppId) ?? apps[0];
+  const cameraRef = useRef<CameraView>(null);
 
   const completeRep = () => {
     addPushup();
     setLastEarned(rewardMinutes);
     setTimeout(() => setLastEarned(null), 1800);
   };
+
+  const detector = usePushupDetector(cameraRef, detecting && Platform.OS === "android", completeRep);
+
+  // Precarga el modelo en cuanto se entra a la pantalla, para que al pulsar
+  // "Iniciar detección" no haya que esperar la descarga de los pesos.
+  useEffect(() => {
+    if (Platform.OS === "android") preloadPoseModel().catch(() => undefined);
+  }, []);
 
   const invest = () => {
     if (spendMinutes(selectedApp.id, investment)) {
@@ -41,7 +54,7 @@ export default function TrainScreen() {
             <View style={styles.cameraFallback}>
               <View style={styles.cameraCircle}><MaterialIcons name="videocam" size={38} color="#D9FF66" /></View>
               <Text style={styles.cameraTitle}>Cámara lista para entrenar</Text>
-              <Text style={styles.cameraBody}>En la app nativa, sportCamacho usará la cámara frontal para validar el rango de movimiento.</Text>
+              <Text style={styles.cameraBody}>La detección automática por cámara solo funciona en Android (development build). Usa el botón manual mientras tanto.</Text>
             </View>
           ) : !permission ? (
             <View style={styles.cameraFallback}><Text style={styles.cameraBody}>Preparando cámara…</Text></View>
@@ -53,14 +66,37 @@ export default function TrainScreen() {
               <Pressable onPress={requestPermission} style={({ pressed }) => [styles.primaryButton, pressed && styles.pressed]}><Text style={styles.primaryButtonText}>Dar permiso</Text></Pressable>
             </View>
           ) : (
-            <CameraView style={styles.camera} facing="front">
-              <View style={styles.cameraOverlay}><View style={styles.poseFrame}><Text style={styles.poseLabel}>ENCUADRA TU CUERPO</Text></View><Text style={styles.cameraHint}>Baja el pecho · sube con control</Text></View>
+            <CameraView ref={cameraRef} style={styles.camera} facing="front">
+              <View style={styles.cameraOverlay}>
+                <View style={styles.poseFrame}><Text style={styles.poseLabel}>ENCUADRA TU CUERPO</Text></View>
+                {detecting ? (
+                  <Text style={styles.cameraHint}>
+                    {detector.modelLoading && detector.lastAngle === null
+                      ? "Cargando modelo de pose…"
+                      : detector.lastAngle == null
+                        ? "Buscando tu brazo en el encuadre…"
+                        : `Codo: ${Math.round(detector.lastAngle)}° · ${detector.phase === "down" ? "abajo" : detector.phase === "up" ? "arriba" : "…"}`}
+                  </Text>
+                ) : (
+                  <Text style={styles.cameraHint}>Baja el pecho · sube con control</Text>
+                )}
+              </View>
             </CameraView>
           )}
-          <View style={styles.cameraBadge}><View style={styles.liveDot} /><Text style={styles.cameraBadgeText}>MODO DEMO</Text></View>
+          <View style={[styles.cameraBadge, detecting && styles.cameraBadgeLive]}>
+            <View style={[styles.liveDot, detecting && styles.liveDotOn]} />
+            <Text style={styles.cameraBadgeText}>{detecting ? "DETECTANDO" : "EN PAUSA"}</Text>
+          </View>
         </View>
 
-        <View style={styles.notice}><MaterialIcons name="info-outline" size={18} color="#D9FF66" /><Text style={styles.noticeText}>El contador automático de pose se conectará en la build nativa. Usa el botón para simular una detección.</Text></View>
+        {Platform.OS === "android" && permission?.granted && (
+          <Pressable onPress={() => setDetecting((v) => !v)} style={({ pressed }) => [styles.detectToggle, detecting && styles.detectToggleActive, pressed && styles.pressed]}>
+            <MaterialIcons name={detecting ? "pause" : "play-arrow"} size={20} color={detecting ? "#101B2D" : "#D9FF66"} />
+            <Text style={[styles.detectToggleText, detecting && styles.detectToggleTextActive]}>{detecting ? "Detener detección automática" : "Iniciar detección automática"}</Text>
+          </Pressable>
+        )}
+
+        <View style={styles.notice}><MaterialIcons name="info-outline" size={18} color="#D9FF66" /><Text style={styles.noticeText}>La cámara analiza el ángulo de tu codo con un modelo de pose (MoveNet) para contar cada flexión real. Si falla el encuadre, usa el botón manual como respaldo.</Text></View>
 
         <Text style={styles.sectionTitle}>¿Cuánto vale cada flexión?</Text>
         <View style={styles.rewardRow}>
@@ -72,7 +108,7 @@ export default function TrainScreen() {
           ))}
         </View>
 
-        <Pressable onPress={completeRep} style={({ pressed }) => [styles.repButton, pressed && styles.pressed]}><MaterialIcons name="fitness-center" size={22} color="#101B2D" /><Text style={styles.repButtonText}>Registrar flexión detectada</Text></Pressable>
+        <Pressable onPress={completeRep} style={({ pressed }) => [styles.repButton, pressed && styles.pressed]}><MaterialIcons name="fitness-center" size={22} color="#101B2D" /><Text style={styles.repButtonText}>Registrar flexión manualmente</Text></Pressable>
         {lastEarned !== null && <View style={styles.successToast}><MaterialIcons name="check" size={18} color="#101B2D" /><Text style={styles.successText}>+{lastEarned} minuto{lastEarned > 1 ? "s" : ""} al banco</Text></View>}
 
         <View style={styles.investHeader}><Text style={styles.sectionTitle}>Invertir minutos</Text><Text style={styles.available}>{bankMinutes} disponibles</Text></View>
@@ -80,7 +116,7 @@ export default function TrainScreen() {
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.appsRail}>
           {apps.filter((app) => app.blocked).map((app) => (
             <Pressable key={app.id} onPress={() => selectApp(app.id)} style={[styles.appChoice, selectedApp.id === app.id && styles.appChoiceActive]}>
-              <View style={[styles.appChoiceIcon, { backgroundColor: app.accent }]}><MaterialIcons name={app.icon as never} size={18} color="#fff" /></View><Text style={styles.appChoiceText}>{app.name}</Text>{selectedApp.id === app.id && <MaterialIcons name="check" size={15} color="#D9FF66" />}
+              <AppIcon icon={app.icon} accent={app.accent} size={32} /><Text style={styles.appChoiceText}>{app.name}</Text>{selectedApp.id === app.id && <MaterialIcons name="check" size={15} color="#D9FF66" />}
             </Pressable>
           ))}
         </ScrollView>
@@ -111,8 +147,14 @@ const styles = StyleSheet.create({
   poseLabel: { color: "#D9FF66", fontSize: 10, fontWeight: "900", letterSpacing: 1 },
   cameraHint: { color: "#F5F7FB", fontSize: 12, fontWeight: "800", marginTop: 15 },
   cameraBadge: { position: "absolute", top: 14, left: 14, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 9, paddingVertical: 6, borderRadius: 9, backgroundColor: "rgba(14,23,40,0.75)" },
-  liveDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: "#D9FF66" },
+  cameraBadgeLive: { backgroundColor: "rgba(217,255,102,0.18)" },
+  liveDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: "#5E6B85" },
+  liveDotOn: { backgroundColor: "#D9FF66" },
   cameraBadgeText: { color: "#D9FF66", fontSize: 10, fontWeight: "900", letterSpacing: 0.8 },
+  detectToggle: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderWidth: 1.5, borderColor: "#293750", borderRadius: 16, paddingVertical: 13 },
+  detectToggleActive: { backgroundColor: "#D9FF66", borderColor: "#D9FF66" },
+  detectToggleText: { color: "#D9FF66", fontSize: 13, fontWeight: "900" },
+  detectToggleTextActive: { color: "#101B2D" },
   notice: { flexDirection: "row", gap: 8, backgroundColor: "#1B263B", borderRadius: 14, padding: 12, alignItems: "flex-start" },
   noticeText: { color: "#AAB4C6", flex: 1, fontSize: 11, lineHeight: 16 },
   sectionTitle: { color: "#F5F7FB", fontSize: 17, fontWeight: "900" },

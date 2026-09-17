@@ -86,6 +86,7 @@ const config: ExpoConfig = {
   },
   plugins: [
     "expo-router",
+    "./plugins/withInstalledAppsQueries",
     [
       "expo-camera",
       {

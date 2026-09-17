@@ -18,7 +18,7 @@ const MAPPING = {
   "camera.fill": "videocam",
   "lock.fill": "lock",
   "chart.bar.fill": "bar-chart",
-  "person.crop.circle.fill": "account-circle",
+  "shield.fill": "shield",
   "paperplane.fill": "send",
   "chevron.left.forwardslash.chevron.right": "code",
   "chevron.right": "chevron-right",
