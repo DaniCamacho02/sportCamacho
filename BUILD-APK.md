@@ -29,3 +29,9 @@ eas build -p android --profile production
 El perfil `production` genera un Android App Bundle (`.aab`), que es el formato recomendado para Google Play.
 
 > Nota: la cámara y los permisos nativos funcionan en la build Android. El preview web incluido en el proyecto usa un modo demo de cámara.
+
+## Estado del modo Guardián
+
+La pantalla de apps vetadas incluye el flujo de preparación y el acceso a Ajustes, pero **todavía no intercepta aplicaciones externas**. Para impedir que una app se abra y redirigir automáticamente a sportCamacho hay que completar el módulo nativo descrito en `android-blocking/README.md` con un `AccessibilityService` Kotlin/Java. Expo JavaScript no puede interceptar ventanas de otras aplicaciones por sí solo.
+
+La pantalla de perfil incluye el selector de avatares y el flujo visual de Google. La autenticación real necesita registrar los clientes OAuth de Google para Android/iOS y configurar sus IDs en EAS.

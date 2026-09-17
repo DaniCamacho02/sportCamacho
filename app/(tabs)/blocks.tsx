@@ -1,6 +1,6 @@
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
+import { Linking, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
 
 import { ScreenContainer } from "@/components/screen-container";
 import { useSportCamacho } from "@/lib/sport-context";
@@ -16,6 +16,7 @@ export default function BlocksScreen() {
         <View style={styles.headerRow}><View><Text style={styles.eyebrow}>CONTROL</Text><Text style={styles.title}>Apps vetadas</Text></View><View style={styles.countPill}><Text style={styles.countValue}>{blockedCount}</Text><Text style={styles.countLabel}>activas</Text></View></View>
         <View style={styles.introCard}><View style={styles.introIcon}><MaterialIcons name="lock" size={24} color="#D9FF66" /></View><View style={styles.introCopy}><Text style={styles.introTitle}>Tu atención, tus reglas</Text><Text style={styles.introText}>Cuando intentes abrir una app activa, sportCamacho te traerá aquí para ganar el acceso con movimiento.</Text></View></View>
         <Text style={styles.sectionTitle}>Selecciona qué quieres bloquear</Text>
+        <Pressable onPress={() => Platform.OS === "android" && Linking.openSettings()} style={({ pressed }) => [styles.systemButton, pressed && styles.pressed]}><View style={styles.systemIcon}><MaterialIcons name="apps" size={20} color="#D9FF66" /></View><View style={styles.systemCopy}><Text style={styles.systemTitle}>Elegir apps instaladas</Text><Text style={styles.systemText}>Abrir permisos de uso para detectar cualquier app del móvil</Text></View><MaterialIcons name="open-in-new" size={18} color="#D9FF66" /></Pressable>
         <View style={styles.listCard}>
           {apps.map((app, index) => (
             <View key={app.id} style={[styles.appRow, index < apps.length - 1 && styles.rowDivider]}>
@@ -25,9 +26,9 @@ export default function BlocksScreen() {
             </View>
           ))}
         </View>
-        <View style={styles.infoRow}><MaterialIcons name="shield" size={17} color="#8995AA" /><Text style={styles.infoText}>El bloqueo real del sistema requiere permisos de uso y accesibilidad en Android. Este prototipo muestra el flujo de redirección.</Text></View>
+        <View style={styles.infoRow}><MaterialIcons name="shield" size={17} color="#8995AA" /><Text style={styles.infoText}>Para impedir que otra app se abra y redirigir a sportCamacho hace falta un servicio nativo de accesibilidad Android. La interfaz ya está preparada para esa integración.</Text></View>
         <View style={styles.sectionHeader}><Text style={styles.sectionTitle}>Simular una app vetada</Text><Text style={styles.available}>{bankMinutes} min en banco</Text></View>
-        <Pressable onPress={() => { const first = apps.find((app) => app.blocked); if (first) { selectApp(first.id); router.push("/train" as never); } }} style={({ pressed }) => [styles.simulateButton, pressed && styles.pressed]}><View style={styles.simulateIcon}><MaterialIcons name="open-in-new" size={20} color="#101B2D" /></View><View style={styles.simulateCopy}><Text style={styles.simulateTitle}>Intentar abrir app vetada</Text><Text style={styles.simulateText}>Te llevará a ganar o invertir minutos</Text></View><MaterialIcons name="arrow-forward" size={20} color="#D9FF66" /></Pressable>
+        <Pressable onPress={() => { const first = apps.find((app) => app.blocked); if (first) { selectApp(first.id); router.push("/(tabs)/train" as never); } }} style={({ pressed }) => [styles.simulateButton, pressed && styles.pressed]}><View style={styles.simulateIcon}><MaterialIcons name="open-in-new" size={20} color="#101B2D" /></View><View style={styles.simulateCopy}><Text style={styles.simulateTitle}>Intentar abrir app vetada</Text><Text style={styles.simulateText}>Te llevará a ganar o invertir minutos</Text></View><MaterialIcons name="arrow-forward" size={20} color="#D9FF66" /></Pressable>
       </ScrollView>
     </ScreenContainer>
   );
@@ -56,6 +57,11 @@ const styles = StyleSheet.create({
   appSubtitle: { color: "#8995AA", fontSize: 12 },
   infoRow: { flexDirection: "row", gap: 7, alignItems: "flex-start" },
   infoText: { color: "#8995AA", flex: 1, fontSize: 11, lineHeight: 16 },
+  systemButton: { backgroundColor: "#1B263B", borderRadius: 18, padding: 14, flexDirection: "row", alignItems: "center", gap: 10, borderWidth: 1, borderColor: "#2B3953" },
+  systemIcon: { width: 40, height: 40, borderRadius: 13, backgroundColor: "#2D3B20", alignItems: "center", justifyContent: "center" },
+  systemCopy: { flex: 1, gap: 4 },
+  systemTitle: { color: "#F5F7FB", fontSize: 13, fontWeight: "900" },
+  systemText: { color: "#8995AA", fontSize: 11, lineHeight: 15 },
   sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 2 },
   available: { color: "#D9FF66", fontSize: 12, fontWeight: "800" },
   simulateButton: { backgroundColor: "#D9FF66", borderRadius: 18, padding: 14, flexDirection: "row", alignItems: "center", gap: 11 },

@@ -1,0 +1,32 @@
+import { MaterialIcons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+
+import { ScreenContainer } from "@/components/screen-container";
+import { AVATAR_OPTIONS, type AvatarId, useSportCamacho } from "@/lib/sport-context";
+
+export default function ProfileScreen() {
+  const router = useRouter();
+  const { profile, updateProfile, loginWithGoogle, logout } = useSportCamacho();
+  const avatarEntries = Object.entries(AVATAR_OPTIONS) as [AvatarId, (typeof AVATAR_OPTIONS)[AvatarId]][];
+  const xpProgress = profile.xp % 100;
+
+  return (
+    <ScreenContainer className="px-5 pt-5" edges={["top", "left", "right"]}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        <View style={styles.headerRow}><View><Text style={styles.eyebrow}>HOJA DEL AVENTURERO</Text><Text style={styles.title}>Tu personaje</Text></View><Pressable onPress={() => router.back()}><MaterialIcons name="close" size={25} color="#9AA5BA" /></Pressable></View>
+        <View style={styles.profileCard}><View style={styles.avatarRing}><Image source={AVATAR_OPTIONS[profile.avatarId].image} style={styles.avatar} /></View><Text style={styles.name}>{profile.name}</Text><Text style={styles.rank}>Nivel {profile.level} · Guardián del tiempo</Text><View style={styles.xpTrack}><View style={[styles.xpFill, { width: `${xpProgress || 3}%` }]} /></View><Text style={styles.xpText}>{xpProgress}/100 XP</Text></View>
+        <Text style={styles.sectionTitle}>Elige tu avatar</Text>
+        <View style={styles.avatarGrid}>{avatarEntries.map(([id, option]) => <Pressable key={id} onPress={() => updateProfile({ avatarId: id })} style={[styles.avatarOption, profile.avatarId === id && styles.avatarOptionActive]}><Image source={option.image} style={styles.avatarOptionImage} /><Text style={[styles.avatarOptionName, profile.avatarId === id && styles.avatarOptionNameActive]}>{option.name}</Text>{profile.avatarId === id && <View style={styles.selectedBadge}><MaterialIcons name="check" size={13} color="#101B2D" /></View>}</Pressable>)}</View>
+        <Text style={styles.sectionTitle}>Cuenta</Text>
+        {profile.isLoggedIn ? <View style={styles.googleConnected}><View style={styles.googleIcon}><Text style={styles.googleG}>G</Text></View><View style={styles.accountCopy}><Text style={styles.accountTitle}>{profile.name}</Text><Text style={styles.accountEmail}>{profile.email}</Text></View><Pressable onPress={logout}><Text style={styles.disconnect}>Salir</Text></Pressable></View> : <Pressable onPress={loginWithGoogle} style={({ pressed }) => [styles.googleButton, pressed && styles.pressed]}><View style={styles.googleIcon}><Text style={styles.googleG}>G</Text></View><Text style={styles.googleText}>Continuar con Google</Text><MaterialIcons name="arrow-forward" size={18} color="#F5F7FB" /></Pressable>}
+        <Text style={styles.note}>La conexión real de Google necesita configurar el cliente OAuth de Android/iOS en EAS. Esta versión deja el flujo de perfil listo y usa una cuenta de demostración.</Text>
+        <View style={styles.settingsRow}><MaterialIcons name="shield" size={19} color="#D9FF66" /><View style={styles.accountCopy}><Text style={styles.accountTitle}>Modo guardián</Text><Text style={styles.accountEmail}>Bloqueo nativo pendiente de permisos Android</Text></View><MaterialIcons name="chevron-right" size={21} color="#8995AA" /></View>
+      </ScrollView>
+    </ScreenContainer>
+  );
+}
+
+const styles = StyleSheet.create({
+  scrollContent: { paddingBottom: 30, gap: 18 }, headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" }, eyebrow: { color: "#9AA5BA", fontSize: 10, fontWeight: "900", letterSpacing: 1.4 }, title: { color: "#F5F7FB", fontSize: 28, fontWeight: "900", marginTop: 5 }, profileCard: { backgroundColor: "#1B263B", borderRadius: 23, padding: 20, alignItems: "center", borderWidth: 1, borderColor: "#2B3953" }, avatarRing: { width: 104, height: 104, borderRadius: 52, backgroundColor: "#D9FF66", padding: 3 }, avatar: { width: "100%", height: "100%", borderRadius: 50 }, name: { color: "#F5F7FB", fontSize: 21, fontWeight: "900", marginTop: 12 }, rank: { color: "#D9FF66", fontSize: 12, fontWeight: "800", marginTop: 4 }, xpTrack: { height: 7, width: "100%", backgroundColor: "#2C3B55", borderRadius: 4, marginTop: 15, overflow: "hidden" }, xpFill: { height: 7, backgroundColor: "#D9FF66", borderRadius: 4 }, xpText: { color: "#8995AA", fontSize: 10, marginTop: 5 }, sectionTitle: { color: "#F5F7FB", fontSize: 17, fontWeight: "900" }, avatarGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 }, avatarOption: { width: "48%", backgroundColor: "#151F32", borderWidth: 1, borderColor: "#243149", borderRadius: 17, padding: 10, alignItems: "center", position: "relative" }, avatarOptionActive: { borderColor: "#D9FF66", backgroundColor: "#1D2B34" }, avatarOptionImage: { width: 82, height: 82, borderRadius: 41 }, avatarOptionName: { color: "#AAB4C6", fontSize: 12, fontWeight: "800", marginTop: 7 }, avatarOptionNameActive: { color: "#D9FF66" }, selectedBadge: { position: "absolute", top: 8, right: 8, width: 22, height: 22, borderRadius: 11, backgroundColor: "#D9FF66", alignItems: "center", justifyContent: "center" }, googleButton: { height: 54, borderRadius: 17, backgroundColor: "#243149", paddingHorizontal: 15, flexDirection: "row", alignItems: "center", gap: 11 }, googleIcon: { width: 30, height: 30, borderRadius: 15, backgroundColor: "#fff", alignItems: "center", justifyContent: "center" }, googleG: { color: "#4285F4", fontSize: 18, fontWeight: "900" }, googleText: { color: "#F5F7FB", fontSize: 14, fontWeight: "900", flex: 1 }, googleConnected: { minHeight: 58, borderRadius: 17, backgroundColor: "#1B263B", paddingHorizontal: 15, flexDirection: "row", alignItems: "center", gap: 11, borderWidth: 1, borderColor: "#2B3953" }, accountCopy: { flex: 1, gap: 3 }, accountTitle: { color: "#F5F7FB", fontSize: 13, fontWeight: "900" }, accountEmail: { color: "#8995AA", fontSize: 11 }, disconnect: { color: "#F47F7F", fontSize: 12, fontWeight: "800" }, note: { color: "#8995AA", fontSize: 11, lineHeight: 16 }, settingsRow: { backgroundColor: "#151F32", borderRadius: 17, padding: 15, flexDirection: "row", alignItems: "center", gap: 10, borderWidth: 1, borderColor: "#243149" }, pressed: { opacity: 0.8, transform: [{ scale: 0.985 }] },
+});

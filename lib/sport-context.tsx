@@ -1,10 +1,21 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { PropsWithChildren, createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import type { ImageSourcePropType } from "react-native";
 import { calculatePeriodStats, type StatsPeriod } from "@/lib/sport-logic";
 
 export type RewardMinutes = 1 | 2;
 export type LedgerType = "earned" | "spent";
 export type AppId = "instagram" | "tiktok" | "youtube" | "netflix";
+export type AvatarId = "knight" | "ranger" | "mage" | "rogue";
+
+export type UserProfile = {
+  name: string;
+  email?: string;
+  avatarId: AvatarId;
+  level: number;
+  xp: number;
+  isLoggedIn: boolean;
+};
 
 export type BlockedApp = {
   id: AppId;
@@ -29,6 +40,7 @@ type SportState = {
   rewardMinutes: RewardMinutes;
   apps: BlockedApp[];
   entries: LedgerEntry[];
+  profile: UserProfile;
 };
 
 type SportContextValue = SportState & {
@@ -40,6 +52,9 @@ type SportContextValue = SportState & {
   addPushup: () => void;
   spendMinutes: (appId: AppId, minutes: number) => boolean;
   getPeriodStats: (period: StatsPeriod) => { earned: number; spent: number; reps: number };
+  updateProfile: (updates: Partial<UserProfile>) => void;
+  loginWithGoogle: () => void;
+  logout: () => void;
 };
 
 const STORAGE_KEY = "sportcamacho-state-v1";
@@ -51,11 +66,25 @@ const defaultApps: BlockedApp[] = [
   { id: "netflix", name: "Netflix", subtitle: "Series y películas", icon: "movie", accent: "#C94C69", blocked: false },
 ];
 
+export const AVATAR_OPTIONS: Record<AvatarId, { name: string; image: ImageSourcePropType }> = {
+  knight: { name: "Guerrero", image: require("@/assets/images/avatar-knight.png") },
+  ranger: { name: "Exploradora", image: require("@/assets/images/avatar-ranger.png") },
+  mage: { name: "Mago", image: require("@/assets/images/avatar-mage.png") },
+  rogue: { name: "Pícara", image: require("@/assets/images/avatar-rogue.png") },
+};
+
 const defaultState: SportState = {
   bankMinutes: 0,
   rewardMinutes: 1,
   apps: defaultApps,
   entries: [],
+  profile: {
+    name: "Aventurero",
+    avatarId: "knight",
+    level: 1,
+    xp: 0,
+    isLoggedIn: false,
+  },
 };
 
 const SportContext = createContext<SportContextValue | null>(null);
@@ -68,7 +97,10 @@ export function SportProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     AsyncStorage.getItem(STORAGE_KEY)
       .then((saved) => {
-        if (saved) setState(JSON.parse(saved) as SportState);
+        if (saved) {
+          const parsed = JSON.parse(saved) as Partial<SportState>;
+          setState({ ...defaultState, ...parsed, profile: { ...defaultState.profile, ...(parsed.profile ?? {}) } });
+        }
       })
       .catch(() => undefined)
       .finally(() => setHydrated(true));
@@ -95,6 +127,11 @@ export function SportProvider({ children }: PropsWithChildren) {
     setState((current) => ({
       ...current,
       bankMinutes: current.bankMinutes + current.rewardMinutes,
+      profile: {
+        ...current.profile,
+        xp: current.profile.xp + 10,
+        level: Math.floor((current.profile.xp + 10) / 100) + 1,
+      },
       entries: [
         { id: `${Date.now()}`, type: "earned", minutes: current.rewardMinutes, repetitions: 1, date: new Date().toISOString() },
         ...current.entries,
@@ -120,9 +157,38 @@ export function SportProvider({ children }: PropsWithChildren) {
     [state.entries],
   );
 
+  const updateProfile = useCallback((updates: Partial<UserProfile>) => {
+    setState((current) => ({ ...current, profile: { ...current.profile, ...updates } }));
+  }, []);
+
+  const loginWithGoogle = useCallback(() => {
+    // Simulación de login con Google
+    setState((current) => ({
+      ...current,
+      profile: {
+        ...current.profile,
+        name: "Camacho Guerrero",
+        email: "camacho@gmail.com",
+        isLoggedIn: true,
+      },
+    }));
+  }, []);
+
+  const logout = useCallback(() => {
+    setState((current) => ({
+      ...current,
+      profile: {
+        ...current.profile,
+        name: "Aventurero",
+        email: undefined,
+        isLoggedIn: false,
+      },
+    }));
+  }, []);
+
   const value = useMemo(
-    () => ({ ...state, hydrated, selectedAppId, setRewardMinutes, toggleApp, selectApp, addPushup, spendMinutes, getPeriodStats }),
-    [state, hydrated, selectedAppId, setRewardMinutes, toggleApp, selectApp, addPushup, spendMinutes, getPeriodStats],
+    () => ({ ...state, hydrated, selectedAppId, setRewardMinutes, toggleApp, selectApp, addPushup, spendMinutes, getPeriodStats, updateProfile, loginWithGoogle, logout }),
+    [state, hydrated, selectedAppId, setRewardMinutes, toggleApp, selectApp, addPushup, spendMinutes, getPeriodStats, updateProfile, loginWithGoogle, logout],
   );
 
   return <SportContext.Provider value={value}>{children}</SportContext.Provider>;
