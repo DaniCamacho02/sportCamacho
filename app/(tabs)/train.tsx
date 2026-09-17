@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { ScreenContainer } from "@/components/screen-container";
+import { AppIcon } from "@/components/app-icon";
 import { useSportCamacho } from "@/lib/sport-context";
 
 export default function TrainScreen() {
@@ -80,7 +81,7 @@ export default function TrainScreen() {
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.appsRail}>
           {apps.filter((app) => app.blocked).map((app) => (
             <Pressable key={app.id} onPress={() => selectApp(app.id)} style={[styles.appChoice, selectedApp.id === app.id && styles.appChoiceActive]}>
-              <View style={[styles.appChoiceIcon, { backgroundColor: app.accent }]}><MaterialIcons name={app.icon as never} size={18} color="#fff" /></View><Text style={styles.appChoiceText}>{app.name}</Text>{selectedApp.id === app.id && <MaterialIcons name="check" size={15} color="#D9FF66" />}
+              <AppIcon icon={app.icon} accent={app.accent} size={32} /><Text style={styles.appChoiceText}>{app.name}</Text>{selectedApp.id === app.id && <MaterialIcons name="check" size={15} color="#D9FF66" />}
             </Pressable>
           ))}
         </ScrollView>

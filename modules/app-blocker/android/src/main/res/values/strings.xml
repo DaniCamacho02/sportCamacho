@@ -1,0 +1,4 @@
+<resources>
+  <string name="app_blocker_service_label">sportCamacho — Bloqueo de apps</string>
+  <string name="app_blocker_service_description">Permite a sportCamacho detectar cuándo abres una app que has marcado como vetada y redirigirte a ganar o invertir minutos haciendo flexiones. No lee ni almacena el contenido de otras apps, solo su nombre de paquete.</string>
+</resources>

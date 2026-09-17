@@ -1,0 +1,12 @@
+{
+  "name": "installed-apps",
+  "version": "1.0.0",
+  "description": "Módulo nativo local: lista las apps con lanzador instaladas en el dispositivo (Android) para que sportCamacho pueda vetarlas.",
+  "main": "index.ts",
+  "types": "index.ts",
+  "expo": {
+    "autolinking": {
+      "exclude": false
+    }
+  }
+}
