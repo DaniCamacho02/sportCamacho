@@ -1,5 +1,5 @@
 import { MaterialIcons } from "@expo/vector-icons";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { ScreenContainer } from "@/components/screen-container";
 import { AVATARS, getAvatarDef } from "@/components/avatars/hero-avatars";
@@ -19,6 +19,12 @@ export default function HeroScreen() {
             <Text style={styles.title}>{current.name}</Text>
           </View>
         </View>
+
+        <ImageBackground source={require("@/assets/images/rpg-hero-banner.webp")} imageStyle={styles.artImage} style={styles.artBanner}>
+          <View style={styles.artShade} />
+          <Text style={styles.artLabel}>EL REINO TE ESTÁ ESPERANDO</Text>
+          <Text style={styles.artCaption}>Cada flexión desbloquea un poco más de tu leyenda.</Text>
+        </ImageBackground>
 
         <View style={[styles.heroCard, { borderColor: current.accent }]}>
           <View style={[styles.avatarShell, { backgroundColor: `${current.accent}22` }]}>
@@ -102,6 +108,11 @@ export default function HeroScreen() {
 const styles = StyleSheet.create({
   scrollContent: { paddingBottom: 30, gap: 18 },
   headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  artBanner: { height: 126, borderRadius: 20, overflow: "hidden", justifyContent: "flex-end", padding: 15, backgroundColor: "#1B263B" },
+  artImage: { borderRadius: 20, resizeMode: "cover" },
+  artShade: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(8,17,34,0.43)" },
+  artLabel: { color: "#D9FF66", fontSize: 10, fontWeight: "900", letterSpacing: 1.1 },
+  artCaption: { color: "#F5F7FB", fontSize: 14, fontWeight: "800", marginTop: 4, maxWidth: "80%" },
   eyebrow: { color: "#9AA5BA", fontSize: 11, fontWeight: "900", letterSpacing: 1.4 },
   title: { color: "#F5F7FB", fontSize: 24, fontWeight: "900", marginTop: 5 },
   heroCard: { backgroundColor: "#151F32", borderRadius: 24, borderWidth: 1.5, padding: 20, alignItems: "center", gap: 8 },
